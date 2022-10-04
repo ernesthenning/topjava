@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Month;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 public class UserMealsUtil {
@@ -26,6 +27,7 @@ public class UserMealsUtil {
         mealsTo.forEach(System.out::println);
 
         System.out.println(filteredByStreams(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000));
+        System.out.println(filteredByCyclesOptional(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000));
     }
 
     public static List<UserMealWithExcess> filteredByCycles(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
@@ -52,5 +54,34 @@ public class UserMealsUtil {
                 .map(meal -> new UserMealWithExcess(meal.getDateTime(), meal.getDescription(), meal.getCalories(),
                         mealDatesToCalories.get(meal.getDateTime().toLocalDate()) > caloriesPerDay))
                 .collect(Collectors.toList());
+    }
+
+    public static List<UserMealWithExcess> filteredByCyclesOptional(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
+        int caloriesSum = 0;
+        LocalDate dateFirst = meals.get(0).getDateTime().toLocalDate();
+        List<UserMealWithExcess> mealsTrue = new CopyOnWriteArrayList<>();
+        List<UserMealWithExcess> mealsFalse = new CopyOnWriteArrayList<>();
+        for (UserMeal userMeal : meals) {
+            LocalDate currentDate = userMeal.getDateTime().toLocalDate();
+            if (currentDate.equals(dateFirst)) {
+                caloriesSum += userMeal.getCalories();
+            } else {
+                if (caloriesSum > caloriesPerDay) {
+                    mealsFalse = new CopyOnWriteArrayList<>(mealsTrue);
+                } else {
+                    mealsTrue = new CopyOnWriteArrayList<>(mealsFalse);
+                }
+                dateFirst = currentDate;
+                caloriesSum = userMeal.getCalories();
+            }
+            if (TimeUtil.isBetweenHalfOpen(userMeal.getDateTime().toLocalTime(), startTime, endTime)) {
+                mealsTrue.add(new UserMealWithExcess(userMeal.getDateTime(), userMeal.getDescription(), userMeal.getCalories(), true));
+                mealsFalse.add(new UserMealWithExcess(userMeal.getDateTime(), userMeal.getDescription(), userMeal.getCalories(), false));
+            }
+        }
+        if (caloriesSum > caloriesPerDay) {
+            return mealsTrue;
+        }
+        return mealsFalse;
     }
 }
