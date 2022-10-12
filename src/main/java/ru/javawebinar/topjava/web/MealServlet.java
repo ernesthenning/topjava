@@ -18,11 +18,15 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class MealServlet extends HttpServlet {
     private static final Logger log = getLogger(UserServlet.class);
     private static final int caloriesPerDay = 2000;
-    DataAccessUtils dau = new DataAccessUtils();
+
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        List<MealTo> mealToList = MealsUtil.filteredByStreams(dau.findAllMeals(), caloriesPerDay);
+        List<MealTo> mealToList = MealsUtil.filteredByStreams(DataAccessUtils.findAllMeals(), caloriesPerDay);
         request.setAttribute("mealToList", mealToList);
         request.getRequestDispatcher("/meals.jsp").forward(request, response);
+    }
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
+        doGet(request, response);
     }
 
 

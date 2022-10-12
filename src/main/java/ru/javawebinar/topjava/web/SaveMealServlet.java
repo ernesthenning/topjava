@@ -23,12 +23,12 @@ public class SaveMealServlet extends HttpServlet {
         String dateTimeStr = (String) request.getParameter("dateTime");
         String caloriesStr = (String) request.getParameter("calories");
         String description = (String) request.getParameter("description");
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         LocalDateTime dateTime = LocalDateTime.parse(dateTimeStr, formatter);
         int calories = Integer.parseInt(caloriesStr);
         Meal meal = new Meal(dateTime, description, calories);
         dau.saveMeal(meal);
-        request.getRequestDispatcher("meals").forward(request, response);
+        request.getRequestDispatcher("/meals").forward(request, response);
     }
 
 }
