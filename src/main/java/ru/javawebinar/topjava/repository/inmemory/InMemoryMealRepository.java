@@ -2,15 +2,19 @@ package ru.javawebinar.topjava.repository.inmemory;
 
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.repository.MealRepository;
+import ru.javawebinar.topjava.util.DateTimeUtil;
 import ru.javawebinar.topjava.util.MealsUtil;
+import ru.javawebinar.topjava.util.exception.NotFoundException;
 import ru.javawebinar.topjava.web.SecurityUtil;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class InMemoryMealRepository implements MealRepository {
@@ -18,26 +22,28 @@ public class InMemoryMealRepository implements MealRepository {
     private final AtomicInteger counter = new AtomicInteger(0);
 
     {
-        MealsUtil.meals.forEach(this::save);
+        MealsUtil.meals.forEach(m -> save(m, m.getUserId()));
     }
 
     @Override
-    public Meal save(Meal meal) {
+    public Meal save(Meal meal, int userId) {
         if (meal.isNew()) {
             meal.setId(counter.incrementAndGet());
             repository.put(meal.getId(), meal);
             return meal;
         }
         // handle case: update, but not present in storage
-        if (meal.getUserId() == SecurityUtil.authUserId()) {
+        if (meal.getUserId() == userId) {
             return repository.computeIfPresent(meal.getId(), (id, oldMeal) -> meal);
+        } else {
+            throw new NotFoundException("Meal not found!");
         }
-        return null;
+
     }
 
     @Override
-    public boolean delete(int id) {
-        if (SecurityUtil.authUserId() == get(id).getUserId()) {
+    public boolean delete(int id, int userId) {
+        if (userId == get(id, userId).getUserId()) {
             return repository.remove(id) != null;
         } else {
             return false;
@@ -45,19 +51,26 @@ public class InMemoryMealRepository implements MealRepository {
     }
 
     @Override
-    public Meal get(int id) {
-        if (SecurityUtil.authUserId() == repository.get(id).getUserId()) {
+    public Meal get(int id, int userId) {
+        if (userId == repository.get(id).getUserId()) {
             return repository.get(id);
         } else {
-            return null;
+            throw new NotFoundException("Meal not found!");
         }
     }
 
     @Override
-    public Collection<Meal> getAll() {
+    public List<Meal> getAll(int userId) {
+        return filterByPredicate(m -> true, userId);
+    }
+    public List<Meal> getFilteredByDate(LocalDate startDate, LocalDate endDate, int userId) {
+        return filterByPredicate(m -> DateTimeUtil.isBetweenDates(m.getDate(), startDate, endDate), userId);
+    }
+    private List<Meal> filterByPredicate(Predicate<Meal> filter, int userId) {
         return repository.values().stream()
-                .filter(m -> m.getUserId() == SecurityUtil.authUserId())
-                .sorted(Comparator.comparing(Meal::getDate).reversed())
+                .filter(m -> m.getUserId() == userId)
+                .filter(filter)
+                .sorted(Comparator.comparing(Meal::getDateTime).reversed())
                 .collect(Collectors.toList());
     }
 }
