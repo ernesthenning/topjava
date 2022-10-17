@@ -34,17 +34,15 @@ public class InMemoryMealRepository implements MealRepository {
             return meal;
         }
         // handle case: update, but not present in storage
-        if (meal.getUserId() == userId) {
-            return repository.computeIfPresent(meal.getId(), (id, oldMeal) -> meal);
-        } else {
-            throw new NotFoundException("Meal not found!");
+        if (repository.get(meal.getId()).getUserId() == userId) {
+            return repository.compute(meal.getId(), (id, oldMeal) -> meal);
         }
-
+        return null;
     }
 
     @Override
     public boolean delete(int id, int userId) {
-        if (userId == get(id, userId).getUserId()) {
+        if (get(id, userId) != null) {
             return repository.remove(id) != null;
         } else {
             return false;
@@ -53,11 +51,11 @@ public class InMemoryMealRepository implements MealRepository {
 
     @Override
     public Meal get(int id, int userId) {
-        if (userId == repository.get(id).getUserId()) {
-            return repository.get(id);
-        } else {
-            throw new NotFoundException("Meal not found!");
+        Meal meal = repository.get(id);
+        if (userId == meal.getUserId()) {
+            return meal;
         }
+        return null;
     }
 
     @Override
