@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.repository.MealRepository;
 import ru.javawebinar.topjava.repository.inmemory.InMemoryMealRepository;
+import ru.javawebinar.topjava.to.MealTo;
 import ru.javawebinar.topjava.util.MealsUtil;
 import ru.javawebinar.topjava.web.meal.MealRestController;
 
@@ -17,12 +18,15 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Objects;
 
 import static ru.javawebinar.topjava.web.SecurityUtil.authUserId;
-@Component
+
 public class MealServlet extends HttpServlet {
     private static final Logger log = LoggerFactory.getLogger(MealServlet.class);
 
@@ -58,6 +62,15 @@ public class MealServlet extends HttpServlet {
         String action = request.getParameter("action");
 
         switch (action == null ? "all" : action) {
+            case "filter":
+                LocalDate startDate = request.getParameter("startDate").length() == 0 ? LocalDate.MIN : LocalDate.parse(request.getParameter("startDate"));
+                LocalDate endDate = request.getParameter("endDate").length() == 0 ? LocalDate.MAX : LocalDate.parse(request.getParameter("endDate"));
+                LocalTime startTime = request.getParameter("startTime").length() == 0 ? LocalTime.MIN : LocalTime.parse(request.getParameter("startTime"));
+                LocalTime endTime = request.getParameter("endTime").length() == 0 ? LocalTime.MAX : LocalTime.parse(request.getParameter("endTime"));
+
+                List<MealTo> meals = restController.getFiltered(startDate, endDate, startTime, endTime);
+                request.setAttribute("meals", meals);
+                request.getRequestDispatcher("/meals.jsp").forward(request, response);
             case "delete":
                 int id = getId(request);
                 log.info("Delete id={}", id);
