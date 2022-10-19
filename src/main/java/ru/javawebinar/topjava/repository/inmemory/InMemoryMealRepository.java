@@ -5,11 +5,8 @@ import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.repository.MealRepository;
 import ru.javawebinar.topjava.util.DateTimeUtil;
 import ru.javawebinar.topjava.util.MealsUtil;
-import ru.javawebinar.topjava.util.exception.NotFoundException;
-import ru.javawebinar.topjava.web.SecurityUtil;
 
 import java.time.LocalDate;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
 @Repository
 public class InMemoryMealRepository implements MealRepository {
     private final Map<Integer, Meal> repository = new ConcurrentHashMap<>();
@@ -30,12 +28,16 @@ public class InMemoryMealRepository implements MealRepository {
     public Meal save(Meal meal, int userId) {
         if (meal.isNew()) {
             meal.setId(counter.incrementAndGet());
-            repository.put(meal.getId(), meal);
+            repository.put(meal.getId(), new Meal(meal.getId(), meal.getDateTime(),
+                    meal.getDescription(), meal.getCalories(), userId));
             return meal;
         }
+
         // handle case: update, but not present in storage
-        if (repository.get(meal.getId()).getUserId() == userId) {
-            return repository.compute(meal.getId(), (id, oldMeal) -> meal);
+        Meal presentMeal = repository.get(meal.getId());
+        if (presentMeal != null && presentMeal.getUserId() == userId) {
+            return repository.computeIfPresent(meal.getId(), (id, oldMeal) -> new Meal(meal.getId(), meal.getDateTime(),
+                    meal.getDescription(), meal.getCalories(), userId));
         }
         return null;
     }
@@ -62,9 +64,11 @@ public class InMemoryMealRepository implements MealRepository {
     public List<Meal> getAll(int userId) {
         return filterByPredicate(m -> true, userId);
     }
+
     public List<Meal> getFilteredByDate(LocalDate startDate, LocalDate endDate, int userId) {
         return filterByPredicate(m -> DateTimeUtil.isBetweenDates(m.getDate(), startDate, endDate), userId);
     }
+
     private List<Meal> filterByPredicate(Predicate<Meal> filter, int userId) {
         return repository.values().stream()
                 .filter(m -> m.getUserId() == userId)

@@ -45,15 +45,33 @@ public class MealRestController {
         log.info("getAll");
         return service.getAll(authUserId(), authUserCaloriesPerDay());
     }
+
     public List<MealTo> getFiltered(LocalDate startDate, LocalDate endDate, LocalTime startTime, LocalTime endTime) {
         log.info("getFiltered");
-        return service.getFiltered(startDate, endDate, startTime, endTime, authUserId(), authUserCaloriesPerDay());
+        return service.getFiltered(filterStartDate(startDate), filterEndDate(endDate),
+                filterStartTime(startTime), filterEndTime(endTime), authUserId(), authUserCaloriesPerDay());
     }
 
     public Meal update(Meal meal, int id) {
         log.info("update {}", meal);
         assureIdConsistent(meal, id);
         return service.update(meal, authUserId());
+    }
+
+    private LocalDate filterStartDate(LocalDate startDate) {
+        return startDate == null ? LocalDate.MIN : startDate;
+    }
+
+    private LocalDate filterEndDate(LocalDate endDate) {
+        return endDate == null ? LocalDate.MAX : endDate;
+    }
+
+    private LocalTime filterStartTime(LocalTime startTime) {
+        return startTime == null ? LocalTime.MIN : startTime;
+    }
+
+    private LocalTime filterEndTime(LocalTime endTime) {
+        return endTime == null ? LocalTime.MAX : endTime;
     }
 }
 

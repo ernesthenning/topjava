@@ -18,15 +18,15 @@ public class MealService {
 
     private final MealRepository repository;
 
-    public MealService (MealRepository repository) {
+    public MealService(MealRepository repository) {
         this.repository = repository;
     }
 
-    public Meal create (Meal meal, int userId) {
+    public Meal create(Meal meal, int userId) {
         return repository.save(meal, userId);
     }
 
-    public void delete (int id, int userId) {
+    public void delete(int id, int userId) {
         checkNotFoundWithId(repository.delete(id, userId), id);
     }
 
@@ -38,7 +38,7 @@ public class MealService {
         return getTos(repository.getAll(userId), caloriesPerDay);
     }
 
-    public List<MealTo> getFiltered (LocalDate startDate, LocalDate endDate, LocalTime startTime, LocalTime endTime, int userId, int caloriesPerDay) {
+    public List<MealTo> getFiltered(LocalDate startDate, LocalDate endDate, LocalTime startTime, LocalTime endTime, int userId, int caloriesPerDay) {
         return getFilteredTos(repository.getFilteredByDate(startDate, endDate, userId), caloriesPerDay, startTime, endTime);
     }
 
