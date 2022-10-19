@@ -21,7 +21,7 @@ public class InMemoryMealRepository implements MealRepository {
     private final AtomicInteger counter = new AtomicInteger(0);
 
     {
-        MealsUtil.meals.forEach(m -> save(m, m.getUserId()));
+        MealsUtil.meals.forEach(m -> save(m, 1));
     }
 
     @Override
@@ -29,21 +29,21 @@ public class InMemoryMealRepository implements MealRepository {
         if (meal.isNew()) {
             meal.setId(counter.incrementAndGet());
             if (repository.containsKey(userId)) {
-                repository.get(userId).put(meal.getId(), new Meal(meal.getId(), meal.getDateTime(),
-                        meal.getDescription(), meal.getCalories(), userId));
+                repository.get(userId).put(meal.getId(), meal);
             } else {
                 repository.put(userId, new ConcurrentHashMap<>());
-                repository.get(userId).put(meal.getId(), new Meal(meal.getId(), meal.getDateTime(),
-                        meal.getDescription(), meal.getCalories(), userId));
+                repository.get(userId).put(meal.getId(), meal);
             }
             return meal;
         }
         // handle case: update, but not present in storage
         Map<Integer, Meal> userIdMeals = repository.get(userId);
+        if (userIdMeals == null) {
+            return null;
+        }
         Meal presentMeal = userIdMeals.get(meal.getId());
-        if (presentMeal != null && presentMeal.getUserId() == userId) {
-            return userIdMeals.computeIfPresent(meal.getId(), (id, oldMeal) -> new Meal(meal.getId(), meal.getDateTime(),
-                    meal.getDescription(), meal.getCalories(), userId));
+        if (presentMeal != null) {
+            return userIdMeals.computeIfPresent(meal.getId(), (id, oldMeal) -> meal);
         }
         return null;
     }
@@ -60,8 +60,11 @@ public class InMemoryMealRepository implements MealRepository {
     @Override
     public Meal get(int id, int userId) {
         Map<Integer, Meal> userIdMeals = repository.get(userId);
+        if (userIdMeals == null) {
+            return null;
+        }
         Meal meal = userIdMeals.get(id);
-        if (meal != null && userId == meal.getUserId()) {
+        if (meal != null) {
             return meal;
         }
         return null;

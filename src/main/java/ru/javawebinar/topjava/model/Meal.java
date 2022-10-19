@@ -8,18 +8,19 @@ public class Meal extends AbstractBaseEntity {
     private final LocalDateTime dateTime;
     private final String description;
     private final int calories;
-    private final Integer userId;
 
-    public Meal(LocalDateTime dateTime, String description, int calories, Integer userId) {
-        this(null, dateTime, description, calories, userId);
+    public Meal(LocalDateTime dateTime, String description, int calories) {
+        super(null);
+        this.dateTime = dateTime;
+        this.description = description;
+        this.calories = calories;
     }
 
-    public Meal(Integer id, LocalDateTime dateTime, String description, int calories, Integer userId) {
+    public Meal(Integer id, LocalDateTime dateTime, String description, int calories) {
         super(id);
         this.dateTime = dateTime;
         this.description = description;
         this.calories = calories;
-        this.userId = userId;
     }
 
     public LocalDateTime getDateTime() {
@@ -42,9 +43,6 @@ public class Meal extends AbstractBaseEntity {
         return dateTime.toLocalTime();
     }
 
-    public int getUserId() {
-        return userId;
-    }
 
     @Override
     public String toString() {
