@@ -23,18 +23,14 @@ public class InMemoryAdminRestControllerTest {
     private static final Logger log = LoggerFactory.getLogger(InMemoryAdminRestControllerTest.class);
 
     private static ConfigurableApplicationContext appCtx;
-
     private static AdminRestController controller;
-
     private  static InMemoryUserRepository repository;
-
 
         @BeforeClass
         public static void beforeClass() {
             appCtx = new ClassPathXmlApplicationContext("classpath:spring-inmemory-test.xml");
             log.info("\n{}\n", Arrays.toString(appCtx.getBeanDefinitionNames()));
             controller = appCtx.getBean(AdminRestController.class);
-            UserService service = appCtx.getBean(UserService.class);
             repository = appCtx.getBean(InMemoryUserRepository.class);
         }
 
