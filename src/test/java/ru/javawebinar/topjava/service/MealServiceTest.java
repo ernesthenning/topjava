@@ -39,7 +39,7 @@ public class MealServiceTest {
     @Test
     public void get() {
         Meal meal = service.get(USER_MEAL0_ID, USER_ID);
-        assertMatch(meal, user_meal0);
+        assertMatch(meal, userMeal0);
     }
 
     @Test
@@ -70,8 +70,8 @@ public class MealServiceTest {
 
     @Test
     public void getBetweenInclusive() {
-        List<Meal> meals = service.getBetweenInclusive(user_meal0.getDate(), user_meal6.getDate(), USER_ID);
-        assertMatch(meals, userMeals);
+        List<Meal> meals = service.getBetweenInclusive(userMeal0.getDate(), userMeal2.getDate(), USER_ID);
+        assertMatch(meals, filteredUserMeals);
     }
 
     @Test
@@ -111,7 +111,7 @@ public class MealServiceTest {
     @Test
     public void duplicateDateTimeCreate() {
         Meal newMeal = getNew();
-        newMeal.setDateTime(user_meal0.getDateTime());
+        newMeal.setDateTime(userMeal0.getDateTime());
         assertThrows(DataAccessException.class, () -> service.create(newMeal, USER_ID));
     }
 }
