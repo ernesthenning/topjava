@@ -1,6 +1,9 @@
 package ru.javawebinar.topjava.service;
 
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.Stopwatch;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
@@ -19,7 +22,6 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.util.concurrent.TimeUnit;
 
-
 import static org.junit.Assert.assertThrows;
 import static ru.javawebinar.topjava.MealTestData.*;
 import static ru.javawebinar.topjava.UserTestData.ADMIN_ID;
@@ -33,18 +35,25 @@ import static ru.javawebinar.topjava.UserTestData.USER_ID;
 @Sql(scripts = "classpath:db/populateDB.sql", config = @SqlConfig(encoding = "UTF-8"))
 public class MealServiceTest {
 
+    private static final Logger log = LoggerFactory.getLogger(MealServiceTest.class);
+
     private static String testLog;
 
     @Rule
     public Stopwatch stopwatch = new Stopwatch() {
 
-        private final Logger log = LoggerFactory.getLogger(getClass());
-
         private void logInfo(Description description, long nanos) {
             String testName = description.getMethodName();
-            String message = String.format("%s - %d ms",
-                    testName, TimeUnit.NANOSECONDS.toMillis(nanos));
-            testLog += message + "\n";
+            String testTime = "" + TimeUnit.NANOSECONDS.toMillis(nanos);
+            StringBuilder sb = new StringBuilder();
+            sb.append("\n");
+            sb.append(testName);
+            for (int i = 0; i < 35 - testName.length() - testTime.length(); i++) {
+                sb.append(".");
+            }
+            sb.append(testTime);
+            sb.append(" ms");
+            testLog += sb;
             log.debug("{} - {} ms", testName, TimeUnit.NANOSECONDS.toMillis(nanos));
         }
 
@@ -64,7 +73,7 @@ public class MealServiceTest {
 
     @AfterClass
     public static void printLog() {
-        System.out.println(testLog);
+        log.info(testLog);
     }
 
 
@@ -127,6 +136,11 @@ public class MealServiceTest {
     public void updateNotOwn() {
         assertThrows(NotFoundException.class, () -> service.update(meal1, ADMIN_ID));
         MEAL_MATCHER.assertMatch(service.get(MEAL1_ID, USER_ID), meal1);
+    }
+
+    @Test
+    public void updateNotFound() {
+        assertThrows(NotFoundException.class, () -> service.update(service.get(NOT_FOUND, USER_ID), USER_ID));
     }
 
     @Test
