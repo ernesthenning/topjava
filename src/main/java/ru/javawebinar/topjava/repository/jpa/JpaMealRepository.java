@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Repository
+@Transactional(readOnly = true)
 public class JpaMealRepository implements MealRepository {
 
     @PersistenceContext
@@ -21,20 +22,17 @@ public class JpaMealRepository implements MealRepository {
     @Override
     @Transactional
     public Meal save(Meal meal, int userId) {
+        User ref = em.getReference(User.class, userId);
         if (meal.isNew()) {
-            User ref = em.getReference(User.class, userId);
             meal.setUser(ref);
             em.persist(meal);
             return meal;
-        } else {
-            Meal oldMeal = em.find(Meal.class, meal.getId());
-            User oldUser = oldMeal.getUser();
-            if (oldUser.getId() == userId) {
-                meal.setUser(oldUser);
-                return em.merge(meal);
-            }
-            return null;
         }
+        if (get(meal.getId(), userId) != null) {
+            meal.setUser(ref);
+            return em.merge(meal);
+        }
+        return null;
     }
 
     @Override
@@ -58,15 +56,14 @@ public class JpaMealRepository implements MealRepository {
     @Override
     public List<Meal> getAll(int userId) {
         return em.createNamedQuery(Meal.ALL, Meal.class)
-                .setParameter("user", em.getReference(User.class, userId))
+                .setParameter("userId", userId)
                 .getResultList();
     }
 
     @Override
     public List<Meal> getBetweenHalfOpen(LocalDateTime startDateTime, LocalDateTime endDateTime, int userId) {
-        User ref = em.getReference(User.class, userId);
         return em.createNamedQuery(Meal.BETWEEN, Meal.class)
-                .setParameter("user", ref)
+                .setParameter("userId", userId)
                 .setParameter("startDateTime", startDateTime)
                 .setParameter("endDateTime", endDateTime)
                 .getResultList();

@@ -4,6 +4,8 @@ import org.junit.*;
 import org.junit.rules.Stopwatch;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.test.context.ContextConfiguration;
@@ -16,6 +18,7 @@ import ru.javawebinar.topjava.util.exception.NotFoundException;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.concurrent.TimeUnit;
+
 
 import static org.junit.Assert.assertThrows;
 import static ru.javawebinar.topjava.MealTestData.*;
@@ -31,18 +34,18 @@ import static ru.javawebinar.topjava.UserTestData.USER_ID;
 public class MealServiceTest {
 
     private static String testLog;
-    @Autowired
-    private MealService service;
 
     @Rule
     public Stopwatch stopwatch = new Stopwatch() {
 
+        private final Logger log = LoggerFactory.getLogger(getClass());
+
         private void logInfo(Description description, long nanos) {
             String testName = description.getMethodName();
-            String message = String.format("Test %s %s, spent %d milliseconds",
-                    testName, "finished", TimeUnit.NANOSECONDS.toMillis(nanos));
-            System.out.println(message);
+            String message = String.format("%s - %d ms",
+                    testName, TimeUnit.NANOSECONDS.toMillis(nanos));
             testLog += message + "\n";
+            log.debug("{} - {} ms", testName, TimeUnit.NANOSECONDS.toMillis(nanos));
         }
 
         @Override
@@ -50,6 +53,9 @@ public class MealServiceTest {
             logInfo(description, nanos);
         }
     };
+
+    @Autowired
+    private MealService service;
 
     @BeforeClass
     public static void cleanLog() {
