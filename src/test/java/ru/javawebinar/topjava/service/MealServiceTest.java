@@ -37,12 +37,13 @@ public class MealServiceTest {
 
     private static final Logger log = LoggerFactory.getLogger(MealServiceTest.class);
 
-    private static String testLog;
+    private static StringBuilder testLog;
 
     @Rule
     public Stopwatch stopwatch = new Stopwatch() {
 
-        private void logInfo(Description description, long nanos) {
+        @Override
+        protected void finished(long nanos, Description description) {
             String testName = description.getMethodName();
             String testTime = "" + TimeUnit.NANOSECONDS.toMillis(nanos);
             StringBuilder sb = new StringBuilder();
@@ -53,13 +54,8 @@ public class MealServiceTest {
             }
             sb.append(testTime);
             sb.append(" ms");
-            testLog += sb;
-            log.debug("{} - {} ms", testName, TimeUnit.NANOSECONDS.toMillis(nanos));
-        }
-
-        @Override
-        protected void finished(long nanos, Description description) {
-            logInfo(description, nanos);
+            testLog.append(sb);
+            log.debug("{} - {} ms", testName, testTime);
         }
     };
 
@@ -68,14 +64,13 @@ public class MealServiceTest {
 
     @BeforeClass
     public static void cleanLog() {
-        testLog = "";
+        testLog = new StringBuilder();
     }
 
     @AfterClass
     public static void printLog() {
-        log.info(testLog);
+        log.info(testLog.toString());
     }
-
 
     @Test
     public void delete() {
@@ -140,7 +135,9 @@ public class MealServiceTest {
 
     @Test
     public void updateNotFound() {
-        assertThrows(NotFoundException.class, () -> service.update(service.get(NOT_FOUND, USER_ID), USER_ID));
+        Meal newMeal = getNew();
+        newMeal.setId(NOT_FOUND);
+        assertThrows(NotFoundException.class, () -> service.update(newMeal, USER_ID));
     }
 
     @Test
