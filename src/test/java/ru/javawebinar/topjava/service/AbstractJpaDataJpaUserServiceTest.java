@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import ru.javawebinar.topjava.repository.JpaUtil;
 
-public class AbstractJpaDataJpaUserServiceTest extends AbstractUserServiceTest {
+public abstract class AbstractJpaDataJpaUserServiceTest extends AbstractUserServiceTest {
 
     @Autowired
     protected JpaUtil jpaUtil;
