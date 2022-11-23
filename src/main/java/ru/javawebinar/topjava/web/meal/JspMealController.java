@@ -2,11 +2,10 @@ package ru.javawebinar.topjava.web.meal;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.service.MealService;
+import ru.javawebinar.topjava.to.MealTo;
 import ru.javawebinar.topjava.web.SecurityUtil;
 
 import javax.servlet.http.HttpServletRequest;
@@ -14,18 +13,20 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import static ru.javawebinar.topjava.util.DateTimeUtil.parseLocalDate;
 import static ru.javawebinar.topjava.util.DateTimeUtil.parseLocalTime;
 
 @Controller
+@RequestMapping("/meals")
 public class JspMealController extends AbstractMealController {
 
     public JspMealController(MealService mealService) {
         super(mealService);
     }
 
-    @GetMapping("/meals")
+    @RequestMapping
     public String getAll(Model model) {
         model.addAttribute("meals", getAll());
         return "meals";
@@ -37,7 +38,8 @@ public class JspMealController extends AbstractMealController {
         LocalDate endDate = parseLocalDate(request.getParameter("endDate"));
         LocalTime startTime = parseLocalTime(request.getParameter("startTime"));
         LocalTime endTime = parseLocalTime(request.getParameter("endTime"));
-        getBetween(startDate, startTime, endDate, endTime);
+        List<MealTo> meals = getBetween(startDate, startTime, endDate, endTime);
+        request.setAttribute("meals", meals);
         return "meals";
     }
 
@@ -48,20 +50,22 @@ public class JspMealController extends AbstractMealController {
         return "redirect:meals";
     }
 
-    @GetMapping("/save")
-    public String save(Model model, HttpServletRequest request) {
-        if (request.getParameter("action").equals("create")) {
-            model.addAttribute("meal",
-                    new Meal(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES), "", 1000));
-        } else {
-            String id = request.getParameter("id");
-            int mealId = Integer.parseInt(id);
-            model.addAttribute("meal", mealService.get(mealId, SecurityUtil.authUserId()));
-        }
+    @GetMapping("/create")
+    public String create(Model model, HttpServletRequest request) {
+        model.addAttribute("meal",
+                new Meal(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES), "", 1000));
         return "mealForm";
     }
 
-    @PostMapping("/save")
+    @GetMapping("/update")
+    public String update(Model model, HttpServletRequest request) {
+        String id = request.getParameter("id");
+        int mealId = Integer.parseInt(id);
+        model.addAttribute("meal", mealService.get(mealId, SecurityUtil.authUserId()));
+        return "mealForm";
+    }
+
+    @PostMapping
     public String save(HttpServletRequest request) {
         String id = request.getParameter("id");
         Meal meal = new Meal(
